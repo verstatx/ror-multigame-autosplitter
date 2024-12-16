@@ -86,12 +86,14 @@ impl AutoSplitter {
 
             TimerState::Running | TimerState::Paused => {
                 // Reset logic
-                if self.should_reset(game_splitter) && self.settings.reset {
-                    timer::reset();
-                    self.reset_state();
+                if Self::should_reset(game_splitter) {
+                    if !self.state.autoreset_lockout && self.settings.reset {
+                        timer::reset();
+                        self.reset_state();
+                    }
                 }
                 // Splitting logic
-                if !self.state.switching_games {
+                else if !self.state.switching_games {
                     if Self::game_completed(game_splitter) {
                         timer::split();
                         self.state.autoreset_lockout = true; // Disable autoresets in case stage splits are disabled
@@ -132,8 +134,8 @@ impl AutoSplitter {
         return game_splitter.start();
     }
 
-    fn should_reset(&self, game_splitter: &dyn GameAutoSplitter) -> bool {
-        return !self.state.autoreset_lockout && game_splitter.reset();
+    fn should_reset(game_splitter: &dyn GameAutoSplitter) -> bool {
+        return game_splitter.reset();
     }
 
     fn should_split(game_splitter: &dyn GameAutoSplitter) -> bool {

@@ -230,7 +230,7 @@ impl game::GameAutoSplitter for Game {
     fn reset(&self) -> bool {
         if let Some(scene) = self.game_state.scene.pair {
             return match scene.current.as_str() {
-                "lobby" | "title" | "crystalworld" | "eclipseworld" | "infinitetowerworld"
+                "lobby" | "loadingbasic" | "intro" | "title" | "crystalworld" | "eclipseworld" | "infinitetowerworld"
                     => true,
                 _ => false
             }
