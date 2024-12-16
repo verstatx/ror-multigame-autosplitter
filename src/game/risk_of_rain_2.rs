@@ -3,9 +3,6 @@ use async_trait::async_trait;
 use bytemuck::CheckedBitPattern;
 use derive;
 
-#[cfg(debug_output)]
-use asr::timer;
-
 use crate::game;
 use crate::AutoSplitter;
 
@@ -206,35 +203,6 @@ impl game::GameAutoSplitter for Game {
                     self.game_state.scene.update(ArrayString::<16>::from(&utf8_scene).ok());
                 }
 
-
-                // show game_state for debugging
-                #[cfg(debug_output)] {
-                    match self.game_state.fade.pair {
-                        Some(fade) => timer::set_variable("[RoR2] alpha", &format!("{0:?}", fade.current)),
-                        _ => timer::set_variable("[RoR2] alpha", "[invalid]")
-                    }
-                    match self.game_state.stage_count.pair {
-                        Some(stage_count) => timer::set_variable("[RoR2] stageClearCount", &format!("{0:?}", stage_count.current)),
-                        _ => timer::set_variable("[RoR2] stageClearCount", "[Invalid]")
-                    }
-                    match self.game_state.results.pair {
-                        Some(results) => timer::set_variable("[RoR2] shouldDisplayGameEndReportPanels", &format!("{0:?}", results.current)),
-                        _ => timer::set_variable("[RoR2] shouldDisplayGameEndReportPanels", "[invalid]")
-                    }
-                    match self.game_state.scene.pair {
-                        Some(scene) => timer::set_variable("[RoR2] scene name", &format!("{0:?}", scene.current)),
-                        _ => timer::set_variable("[RoR2] scene name", "[invalid]")
-                    }
-                }
-
-                // Log scene changes
-                #[cfg(debug_output)]
-                if let Some(scene) = self.game_state.scene.pair {
-                    if scene.changed() {
-                        asr::print_message(&format!("{0:?}", scene.current));
-                    }
-                }
-
                 self.settings.update();
                 // cede control to main autosplitter logic loop
                 autosplitter.update_loop(Some(self));
@@ -276,8 +244,6 @@ impl game::GameAutoSplitter for Game {
         if self.settings.ror2_stages {
             if let Some(stage_count) = self.game_state.stage_count.pair {
                 if stage_count.current >= 1 && stage_count.increased() {
-                    // Log stage cleared
-                    #[cfg(debug_output)] asr::print_message(&format!("{0:?}", stage_count.current));
                     // avoid double splits on Commencement
                     return match self.game_state.scene.pair {
                         Some(scene) => !scene.current.starts_with("moon"),

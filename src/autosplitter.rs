@@ -1,16 +1,9 @@
 use asr::{settings::{Gui, gui::Title}, time::Duration, timer, timer::TimerState};
 
-#[cfg(debug_swap)]
-use asr::settings::Map;
-
 use crate::game::GameAutoSplitter;
 
 #[derive(Gui)]
 pub struct AutoSplitterSettings {
-    #[cfg(debug_swap)]
-    /// [DEBUG] Swap Games
-    #[default = false]
-    pub swap_games: bool,
     /// General Settings
     pub _general_settings: Title,
     /// Allow the autosplitter to start the timer automatically
@@ -99,18 +92,10 @@ impl AutoSplitter {
                 }
                 // Splitting logic
                 if !self.state.switching_games {
-                    if Self::game_completed(game_splitter) || { #[cfg(debug_swap)] {self.settings.swap_games} #[cfg(not(debug_swap))] true } {
+                    if Self::game_completed(game_splitter) {
                         timer::split();
                         self.state.autoreset_lockout = true; // Disable autoresets in case stage splits are disabled
                         self.state.switching_games = true; // pause timer until game swap is completed
-
-                        // Debugging
-                        #[cfg(debug_output)] asr::print_message("Game Completed.");
-                        #[cfg(debug_swap)] {
-                            let s = Map::load();
-                            s.insert("swap_games",  false);
-                            s.store();
-                        }
                     } else if Self::should_split(game_splitter) {
                         if self.settings.split {
                             timer::split();
@@ -140,12 +125,6 @@ impl AutoSplitter {
             TimerState::Unknown => (),
 
             _ => todo!("New timer states have been added. The autosplitter needs to be updated.")
-        }
-
-        // show timer state for debugging
-        #[cfg(debug_output)] {
-            timer::set_variable("[Timer] switching_games", &format!("{0:?}", self.state.switching_games));
-            timer::set_variable("[Timer] autoreset_lockout", &format!("{0:?}", self.state.autoreset_lockout));
         }
     }
 

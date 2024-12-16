@@ -2,9 +2,6 @@ use asr::{future::{next_tick, retry}, Process, settings::{Gui, gui::Title}, watc
 use async_trait::async_trait;
 use derive;
 
-#[cfg(debug_output)]
-use { asr::timer, std::fmt };
-
 use crate::game;
 use crate::AutoSplitter;
 
@@ -57,9 +54,6 @@ impl game::GameAutoSplitter for Game {
 
         let (main_module, _main_module_size) = process.wait_module_range(&TARGET_PROCESS_NAME).await; // slow, but avoids deadlock
 
-        // Log main module size (differs on Linux)
-        #[cfg(debug_output)] asr::print_message(&_main_module_size.to_string());
-
         // game version detection and handling
         let (room, in_game_time) = retry(|| find_gamevar_pointers(process, &main_module)).await; // intentionally hangs for unsupported versions
 
@@ -77,26 +71,6 @@ impl game::GameAutoSplitter for Game {
                     _ => None
                 }
             );
-
-            // show game state for debugging
-            #[cfg(debug_output)] {
-                match self.game_state.room.pair {
-                    Some(room) => timer::set_variable("[RoR:R] room ID", &format!("{0:?}", room.current)),
-                    _ => timer::set_variable("[RoR:R] room ID", "[invalid]")
-                }
-                match self.game_state.in_game_time.pair {
-                    Some(in_game_time) => timer::set_variable("[RoR:R] In-Game Time", &format!("{0:?}", in_game_time.current)),
-                    _ => timer::set_variable("[RoR:R] In-Game Time", "[invalid]")
-                }
-            }
-
-            // Log room ID changes
-            #[cfg(debug_output)]
-            if let Some(room) = self.game_state.room.pair {
-                if room.changed() {
-                    asr::print_message(&format!("{0:?}", room.current))
-                }
-            }
 
             self.settings.update();
             // cede control to main autosplitter logic loop
@@ -168,9 +142,6 @@ mod version_details {
     pub fn find_gamevar_pointers<'a>(process: &'a Process, module_offset: &'a Address) -> Option<(RoomPointer, IGTPointer)> {
         for gv in SupportedGameVersions::data() {
             if check_build_string(process, module_offset, &gv.build_string) {
-                // Log detected version
-                #[cfg(debug_output)] asr::print_message(&format!("{}", gv.version));
-                //return Some(&gv.offsets);
                 return Some((RoomPointer::new_64bit(*module_offset, gv.offsets.room), IGTPointer::new_64bit(*module_offset, gv.offsets.in_game_time)));
             }
         }
@@ -191,26 +162,7 @@ mod version_details {
         pub in_game_time: &'static [u64],
     }
 
-    #[cfg(debug_output)]
-    #[repr(u32)] #[derive(Clone, Copy)]
-    pub enum GameVersion {
-        V1_0_1,
-        V1_0_2,
-        V1_0_3,
-        V1_0_4,
-        V1_0_5,
-    }
-
-    #[cfg(debug_output)]
-    impl fmt::Display for GameVersion {
-        /// FIXME lazy fragile hack
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "v1.0.{:?}", (*self as u32) + 1)
-        }
-    }
-
     struct GameVersionData {
-        #[cfg(debug_output)] version: GameVersion,
         build_string: BuildString,
         offsets: GameVarOffsets,
     }
@@ -230,7 +182,6 @@ mod version_details {
 
         const VERSION_DATA: [GameVersionData; 3] = [
             { GameVersionData {
-                #[cfg(debug_output)] version: GameVersion::V1_0_3,
                 build_string: { BuildString {
                     address: 0x1A7C700,
                     expected: "BUILD_ID: 234, BUILD_BRANCH: PATCH_1_0_3, VERSION_STRING: 1.0.3"
@@ -242,7 +193,6 @@ mod version_details {
             } },
 
             { GameVersionData {
-                #[cfg(debug_output)] version: GameVersion::V1_0_4,
                 build_string: { BuildString {
                     address: 0x1ABCB10,
                     expected: "BUILD_ID: 242, BUILD_BRANCH: the-mouse-aim-branch, VERSION_STRING: 1.0.4"
@@ -254,7 +204,6 @@ mod version_details {
             } },
 
             { GameVersionData {
-                #[cfg(debug_output)] version: GameVersion::V1_0_5,
                 build_string: { BuildString {
                     address: 0x1ABC988,
                     expected: "BUILD_ID: 248, BUILD_BRANCH: master, VERSION_STRING: 1.0.4"

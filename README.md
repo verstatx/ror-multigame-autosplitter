@@ -31,20 +31,6 @@ cargo build --release
 
 The compiled output .wasm will be located in `target/wasm32-unknown-unknown/release/ror_multigame_autosplitter.wasm`.
 
-### Optional debug features
-
-The following convenience debugging features can be enabled when compiling.
-
-> `debug_output` - enables debug messages for certain timer/game events.  
-> `debug_swap` - adds a "setting" which is actually a button that triggers a manual game swap.
-
-
-Re-build with the desired feature flags enabled.
-
-```sh
-cargo build --features debug_output,debug_swap --release
-```
-
 ## Known Issues and Limitations
 * Rust
 * The first split has a slightly (<1ms) lower "Game Time" than "Real Time".  

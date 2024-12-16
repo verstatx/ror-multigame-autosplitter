@@ -2,9 +2,6 @@ use asr::{deep_pointer::DeepPointer, future::{next_tick, retry}, Process, settin
 use async_trait::async_trait;
 use derive;
 
-#[cfg(debug_output)]
-use asr::timer;
-
 use crate::game;
 use crate::AutoSplitter;
 
@@ -88,9 +85,6 @@ impl game::GameAutoSplitter for Game {
             TARGET_PROCESS_NAMES.iter().find_map(|&m| process.get_module_range(m).ok() )
         }).await;
 
-        // Log main module size (differs on Linux)
-        #[cfg(debug_output)] print_message(&_main_module_size.to_string());
-
         let room = DeepPointer::<1>::new_32bit(main_module, &[0x2BED7A8]);
         let run_end_flag = DeepPointer::<5>::new_32bit(main_module, &[0x2BEB5E0, 0x0, 0x548, 0xC, 0xB4]);
         let in_game_time = DeepPointer::<10>::new_32bit(main_module, &[0x02BEB5E0, 0x0, 0x28, 0xC, 0xBC, 0x8, 0x0, 0x720, 0x8, 0x1EC0]);
@@ -115,30 +109,6 @@ impl game::GameAutoSplitter for Game {
                     _ => None
                 }
             );
-
-            // show game state for debugging
-            #[cfg(debug_output)] {
-                match self.game_state.room.pair {
-                    Some(room) => timer::set_variable("[RoR1] room ID", &format!("{0:?}", room.current)),
-                    _ => timer::set_variable("[RoR1] room ID", "[invalid]")
-                }
-                match self.game_state.run_end_flag.pair {
-                    Some(run_end_flag) => timer::set_variable("[RoR1] run end flag", &format!("{0:?}", run_end_flag.current)),
-                    _ => timer::set_variable("[RoR1] run end flag", "[invalid]")
-                }
-                match self.game_state.in_game_time.pair {
-                    Some(in_game_time) => timer::set_variable("[RoR1] In-Game Time", &format!("{0:?}", in_game_time.current)),
-                    _ => timer::set_variable("[RoR1] In-Game Time", "[invalid]")
-                }
-            }
-
-            // Log room ID changes
-            #[cfg(debug_output)]
-            if let Some(room) = self.game_state.room.pair {
-                if room.changed() {
-                    asr::print_message(&format!("{0:?}", room.current))
-                }
-            }
 
             self.settings.update();
             // cede control to main autosplitter logic loop

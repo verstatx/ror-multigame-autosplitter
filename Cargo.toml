@@ -13,6 +13,3 @@ asr = { git = "https://github.com/LiveSplit/asr.git", version = "0.1.0", feature
 async-trait = "0.1.83"
 bytemuck = { version = "1.13.1", features = ["derive", "min_const_generics"] }
 
-[features]
-debug_output = []
-debug_swap = []
