@@ -1,0 +1,18 @@
+[package]
+name = "ror-multigame-autosplitter"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+asr = { git = "https://github.com/LiveSplit/asr.git", version = "0.1.0", features = ["derive", "unity", "alloc"] } # alloc = debug strings
+async-trait = "0.1.83"
+bytemuck = { version = "1.13.1", features = ["derive", "min_const_generics"] }
+
+[features]
+debug_output = []
+debug_swap = []
